@@ -29,7 +29,6 @@ export class NavMenu extends Component {
     this.logOut = this.logOut.bind(this);
     this.state = {
       collapsed: true,
-      userName: "",
     };
     this.logoutLink = null;
     this.setLogoutRef = (element) => (this.logoutLink = element);
@@ -72,7 +71,9 @@ export class NavMenu extends Component {
             <NavbarBrand tag={Link} to="/">
               Email Broadcast
             </NavbarBrand>
-            <NavbarToggler onClick={this.toggleNavbar} className="ml-auto" />
+            {this.context.userName && (
+              <NavbarToggler onClick={this.toggleNavbar} className="ml-auto" />
+            )}
 
             <Collapse
               className="d-sm-inline-flex "
@@ -102,7 +103,7 @@ export class NavMenu extends Component {
                   <DropdownToggle nav caret>
                     <PersonOutline></PersonOutline> {this.context.userName}
                   </DropdownToggle>
-                  <DropdownMenu>
+                  <DropdownMenu style={{ left: "-177%" }}>
                     <DropdownItem>
                       <NavItem>
                         <NavLink

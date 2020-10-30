@@ -149,7 +149,7 @@ class MailGroup extends Component {
             <Email />
           </Avatar>
           <Typography component="h1" variant="h5">
-            Email {this.state.groupName}
+            Email <b>{this.state.groupName}</b>
           </Typography>
           <CircularProgress
             style={{ marginTop: "2%" }}

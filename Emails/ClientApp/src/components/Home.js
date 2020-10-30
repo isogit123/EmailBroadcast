@@ -37,8 +37,10 @@ const styles = (theme) => ({
     backgroundColor: theme.palette.secondary.main,
   },
   card: {
-    width: "50%",
     margin: theme.spacing(1),
+  },
+  fab: {
+    textAlign: "right",
   },
 });
 
@@ -100,58 +102,62 @@ class Home extends Component {
           {this.state.loading && (
             <CircularProgress style={{ marginTop: "2%" }} />
           )}
-          {!this.state.loading &&
-            this.state.groups.map((item, index) => {
-              return (
-                <Card className={classes.card}>
-                  <CardContent>
-                    <Typography variant="h5" component="h2">
-                      {item.name}
-                    </Typography>
-                  </CardContent>
-                  <CardActions>
-                    <Button
-                      component={Link}
-                      to={{
-                        pathname: "/MailGroup",
-                        state: {
-                          groupId: item.id,
-                        },
-                      }}
-                    >
-                      Send Email
-                    </Button>
-                    <Button
-                      component={Link}
-                      to={{
-                        pathname: "/EditGroup",
-                        state: {
-                          id: item.id,
-                        },
-                      }}
-                    >
-                      Edit
-                    </Button>
-                    <Button onClick={async () => this.removeGroup(item.id)}>
-                      Remove
-                    </Button>
-                  </CardActions>
-                </Card>
-              );
-            })}
-          {!this.state.loading && (
-            <div style={{ width: "50%", textAlign: "right" }}>
-              <Link
-                to={{
-                  pathname: "/AddGroup",
-                }}
-              >
-                <Fab color="primary" aria-label="add">
-                  <Add />
-                </Fab>
-              </Link>
-            </div>
-          )}
+          <Grid container>
+            <Grid item xs={12}>
+              {!this.state.loading &&
+                this.state.groups.map((item, index) => {
+                  return (
+                    <Card className={classes.card}>
+                      <CardContent>
+                        <Typography variant="h5" component="h2">
+                          {item.name}
+                        </Typography>
+                      </CardContent>
+                      <CardActions>
+                        <Button
+                          component={Link}
+                          to={{
+                            pathname: "/MailGroup",
+                            state: {
+                              groupId: item.id,
+                            },
+                          }}
+                        >
+                          Send Email
+                        </Button>
+                        <Button
+                          component={Link}
+                          to={{
+                            pathname: "/EditGroup",
+                            state: {
+                              id: item.id,
+                            },
+                          }}
+                        >
+                          Edit
+                        </Button>
+                        <Button onClick={async () => this.removeGroup(item.id)}>
+                          Remove
+                        </Button>
+                      </CardActions>
+                    </Card>
+                  );
+                })}
+              {!this.state.loading && (
+                <div className={classes.fab}>
+                  <Link
+                    to={{
+                      pathname: "/AddGroup",
+                    }}
+                  >
+                    <Fab color="primary" aria-label="add">
+                      <Add />
+                    </Fab>
+                  </Link>
+                </div>
+              )}
+            </Grid>
+          </Grid>
         </div>
       </Container>
     );

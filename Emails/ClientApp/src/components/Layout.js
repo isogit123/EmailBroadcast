@@ -7,13 +7,7 @@ import Link from "@material-ui/core/Link";
 import LoggedInUserName from "./Context";
 import { viewError } from "./util";
 
-const styles = {
-  stickToBottom: {
-    width: "100%",
-    bottom: "0",
-    position: "relative",
-  },
-};
+const styles = {};
 
 export class Layout extends Component {
   static displayName = Layout.name;
@@ -37,15 +31,13 @@ export class Layout extends Component {
           <NavMenu />
           <Container>{this.props.children}</Container>
         </LoggedInUserName.Provider>
-        <Box style={styles.stickToBottom}>
+        <Box mt={5}>
           <Typography variant="body2" color="textSecondary" align="center">
             {"Licensed under MIT License"}
           </Typography>
           <Typography variant="body2" color="textSecondary" align="center">
             {"Designed using "}
-            <Link color="inherit" href="https://material-ui.com/">
-              Material UI
-            </Link>{" "}
+            <Link href="https://material-ui.com/">Material UI</Link>{" "}
             {"templates"}
           </Typography>
         </Box>

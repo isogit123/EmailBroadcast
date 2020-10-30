@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { removeConfirmation, viewError, getCookie, formatDate } from "./util";
 //Design
 import Avatar from "@material-ui/core/Avatar";
+import Grid from "@material-ui/core/Grid";
 import CssBaseline from "@material-ui/core/CssBaseline";
 import CircularProgress from "@material-ui/core/CircularProgress";
 import Email from "@material-ui/icons/Email";
@@ -80,39 +81,43 @@ class EmailsList extends Component {
           {this.state.loading && (
             <CircularProgress style={{ marginTop: "2%" }} />
           )}
-          {!this.state.loading && (
-            <List className={classes.list} component={Card}>
-              {this.state.emails.map((item, index) => {
-                return (
-                  <ListItem
-                    button
-                    component={Link}
-                    to={{
-                      pathname: "/EmailDetails",
-                      state: {
-                        emailId: item.id,
-                      },
-                    }}
-                  >
-                    <ListItemText
-                      primary={
-                        <div>
-                          <div>{item.groups.name}</div>
-                          <div>{item.subject}</div>
-                        </div>
-                      }
-                      secondary={formatDate(item.sendingDate)}
-                    />
-                    {item.sentEmailsFailuresCount > 0 && (
-                      <ListItemIcon className={classes.errorIcon}>
-                        <ErrorOutline color="error" />
-                      </ListItemIcon>
-                    )}
-                  </ListItem>
-                );
-              })}
-            </List>
-          )}
+          <Grid container>
+            <Grid item xs={12}>
+              {!this.state.loading && (
+                <List className={classes.list} component={Card}>
+                  {this.state.emails.map((item, index) => {
+                    return (
+                      <ListItem
+                        button
+                        component={Link}
+                        to={{
+                          pathname: "/EmailDetails",
+                          state: {
+                            emailId: item.id,
+                          },
+                        }}
+                      >
+                        <ListItemText
+                          primary={
+                            <div>
+                              <div>{item.groups.name}</div>
+                              <div>{item.subject}</div>
+                            </div>
+                          }
+                          secondary={formatDate(item.sendingDate)}
+                        />
+                        {item.sentEmailsFailuresCount > 0 && (
+                          <ListItemIcon className={classes.errorIcon}>
+                            <ErrorOutline color="error" />
+                          </ListItemIcon>
+                        )}
+                      </ListItem>
+                    );
+                  })}
+                </List>
+              )}
+            </Grid>
+          </Grid>
         </div>
       </Container>
     );

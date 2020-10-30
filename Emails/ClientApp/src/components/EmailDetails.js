@@ -27,7 +27,7 @@ const styles = (theme) => ({
   },
   card: {
     width: "100%", // Fix IE 11 issue.
-    marginTop: theme.spacing(1),
+    margin: theme.spacing(1),
   },
 });
 class EmailDetails extends Component {
@@ -56,7 +56,7 @@ class EmailDetails extends Component {
     const { classes } = this.props;
     const { email } = this.state;
     return (
-      <Container component="main" maxWidth="xs">
+      <Container component="main" maxWidth="">
         <CssBaseline />
         <div className={classes.paper}>
           <Avatar className={classes.avatar}>
