@@ -153,6 +153,11 @@ namespace Emails.Controllers
             cache.Query(new Apache.Ignite.Core.Cache.Query.SqlFieldsQuery($"delete from SessionStore where UserId={HttpContext.Session.GetInt32("userId").Value} and SessionId<>'{HttpContext.Session.Id}'"));
 
         }
+        [ServiceFilter(typeof(AuthenticationFilter))]
+        public void CheckSession()
+        {
+
+        }
 
         //Sends email confirmation
         private async Task<string> SendConfirmationEmail(int userId, string email)

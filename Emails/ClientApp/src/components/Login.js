@@ -100,7 +100,11 @@ class Login extends Component {
         let data = await resp.text();
         if (data != "-1") {
           this.context.setUserName(this.state.username);
-          this.props.history.push("/");
+          let requestedUrl = sessionStorage.getItem("requestedUrl");
+          if (requestedUrl) {
+            sessionStorage.removeItem("requestedUrl");
+            this.props.history.push(requestedUrl);
+          } else this.props.history.push("/");
         } else {
           viewError("User not found");
           this.setState({ submitting: false });

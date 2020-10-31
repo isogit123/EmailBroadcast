@@ -72,17 +72,6 @@ namespace Emails
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env, IAntiforgery antiforgery)
         {
-            app.Use(next => context =>
-            {
-                string path = context.Request.Path.Value.ToLower();
-                if (path.Contains("add") || path.Contains("delete") || path.Contains("login") || path.Contains("edit"))
-                {
-                    var tokens = antiforgery.GetAndStoreTokens(context);
-                    context.Response.Cookies.Append("CSRF-TOKEN", tokens.RequestToken, new CookieOptions { HttpOnly = false });
-                }
-                return next(context);
-            });
-
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
@@ -100,6 +89,17 @@ namespace Emails
 
             app.UseRouting();
             app.UseSession();
+            app.Use(next => context =>
+            {
+                string isTokenGenerated = context.Session.GetString("isTokenGenerated");
+                if (string.IsNullOrEmpty(isTokenGenerated))
+                {
+                    var tokens = antiforgery.GetAndStoreTokens(context);
+                    context.Response.Cookies.Append("CSRF-TOKEN", tokens.RequestToken, new CookieOptions { HttpOnly = false });
+                    context.Session.SetString("isTokenGenerated", "1");
+                }
+                return next(context);
+            });
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllerRoute(

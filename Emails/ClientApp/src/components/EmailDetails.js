@@ -1,5 +1,6 @@
 ﻿import React, { Component } from "react";
-import { formatDate, viewError } from "./util";
+import { formatDate, viewError, checkSession } from "./util";
+import { withRouter } from "react-router-dom";
 //Design
 import Avatar from "@material-ui/core/Avatar";
 import CssBaseline from "@material-ui/core/CssBaseline";
@@ -37,13 +38,14 @@ class EmailDetails extends Component {
     loadingFailure: false,
   };
   componentDidMount() {
-    const { emailId } = this.props.location.state;
+    checkSession();
+    console.log(this.props.location);
+    let { emailId } = this.props.match.params;
     fetch("api/sentemails/GetEmailById/?emailId=" + emailId)
       .then((response) => {
         if (response.status == 200) {
           return response.json();
-        } else if (response.status == 401) this.props.history.push("/login");
-        else {
+        } else if (response.status != 401) {
           viewError("Error fetching email data");
           this.setState({ loading: false, loadingFailure: true });
         }
@@ -114,4 +116,4 @@ class EmailDetails extends Component {
 EmailDetails.propTypes = {
   classes: PropTypes.object.isRequired,
 };
-export default withStyles(styles)(EmailDetails);
+export default withRouter(withStyles(styles)(EmailDetails));

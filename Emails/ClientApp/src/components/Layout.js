@@ -3,7 +3,7 @@ import { Container } from "reactstrap";
 import { NavMenu } from "./NavMenu";
 import Typography from "@material-ui/core/Typography";
 import Box from "@material-ui/core/Box";
-import Link from "@material-ui/core/Link";
+import { Link } from "react-router-dom";
 import LoggedInUserName from "./Context";
 import { viewError } from "./util";
 
@@ -40,6 +40,12 @@ export class Layout extends Component {
             <Link href="https://material-ui.com/">Material UI</Link>{" "}
             {"templates"}
           </Typography>
+          <Link
+            id="loginlink"
+            to={{
+              pathname: "/Login",
+            }}
+          ></Link>
         </Box>
       </div>
     );

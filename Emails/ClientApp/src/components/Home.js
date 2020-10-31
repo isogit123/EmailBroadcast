@@ -117,10 +117,7 @@ class Home extends Component {
                         <Button
                           component={Link}
                           to={{
-                            pathname: "/MailGroup",
-                            state: {
-                              groupId: item.id,
-                            },
+                            pathname: "/MailGroup/" + item.id,
                           }}
                         >
                           Send Email
@@ -128,10 +125,7 @@ class Home extends Component {
                         <Button
                           component={Link}
                           to={{
-                            pathname: "/EditGroup",
-                            state: {
-                              id: item.id,
-                            },
+                            pathname: "/EditGroup/" + item.id,
                           }}
                         >
                           Edit

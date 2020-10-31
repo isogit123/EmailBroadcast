@@ -60,3 +60,13 @@ export function formatDate(date) {
   ).slice(-2)}
   `;
 }
+
+export function checkSession() {
+  fetch("api/users/checksession").then((response) => {
+    if (response.status == 401) {
+      const queryStringIndex = window.location.href.indexOf("?");
+      sessionStorage.setItem("requestedUrl", window.location.pathname);
+      document.getElementById("loginlink").click();
+    }
+  });
+}

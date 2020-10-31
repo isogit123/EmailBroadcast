@@ -1,6 +1,12 @@
 ﻿import React, { Component } from "react";
 import { Link } from "react-router-dom";
-import { removeConfirmation, viewError, getCookie, formatDate } from "./util";
+import {
+  removeConfirmation,
+  viewError,
+  getCookie,
+  formatDate,
+  checkSession,
+} from "./util";
 //Design
 import Avatar from "@material-ui/core/Avatar";
 import Grid from "@material-ui/core/Grid";
@@ -52,14 +58,15 @@ class EmailsList extends Component {
   };
 
   async getEmails() {
+    checkSession();
     const url = `api/sentemails/GetEmails/`;
     const response = await fetch(url);
-    if (response.status == 401) this.props.history.push("/login");
-    else if (response.status == 200) {
+    if (response.status == 200) {
       const data = await response.json();
       const newState = { emails: data };
       this.setState(newState);
-    } else viewError("Website not available", "Please try again later");
+    } else if (response.status != 401)
+      viewError("Website not available", "Please try again later");
   }
   async componentDidMount() {
     await this.getEmails();
@@ -91,10 +98,7 @@ class EmailsList extends Component {
                         button
                         component={Link}
                         to={{
-                          pathname: "/EmailDetails",
-                          state: {
-                            emailId: item.id,
-                          },
+                          pathname: "/EmailDetails/" + item.id,
                         }}
                       >
                         <ListItemText

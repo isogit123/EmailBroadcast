@@ -1,6 +1,12 @@
 ﻿import React, { Component } from "react";
 import { Button, TextField, IconButton } from "@material-ui/core";
-import { getCookie, testEmail, viewError, removeConfirmation } from "./util";
+import {
+  getCookie,
+  testEmail,
+  viewError,
+  removeConfirmation,
+  checkSession,
+} from "./util";
 //Design
 import Avatar from "@material-ui/core/Avatar";
 import CssBaseline from "@material-ui/core/CssBaseline";
@@ -79,6 +85,7 @@ class GroupForm extends Component {
     loadingFailure: false,
   };
   componentDidMount() {
+    checkSession();
     if (typeof this.props.add != "undefined") this.setState({ loading: false });
   }
   componentWillReceiveProps(nextProps) {

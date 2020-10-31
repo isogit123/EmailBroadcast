@@ -1,6 +1,12 @@
 ﻿import React, { Component } from "react";
-import { Link } from "react-router-dom";
-import { removeConfirmation, viewError, getCookie, viewSuccess } from "./util";
+import { Link, withRouter } from "react-router-dom";
+import {
+  removeConfirmation,
+  viewError,
+  getCookie,
+  viewSuccess,
+  checkSession,
+} from "./util";
 import {
   TextField,
   Button,
@@ -60,17 +66,24 @@ class MailGroup extends Component {
     submitting: false,
     groupName: "...",
     attachmentsSize: 0,
+    groupId: 0,
   };
   componentDidMount() {
-    fetch("api/group/getbyid/?groupId=" + this.props.location.state.groupId, {})
+    checkSession();
+    let groupId = this.props.match.params.groupId;
+    this.state.groupId = groupId;
+    fetch("api/group/getbyid/?groupId=" + groupId, {})
       .then((response) => {
         if (response.status == 200) return response.json();
-        else {
+        else if (response.status != 401) {
           viewError("Error fetching data");
           this.setState({ loading: false });
         }
       })
-      .then((json) => this.setState({ groupName: json.name, loading: false }));
+      .then((json) => {
+        if (typeof json != "undefined")
+          this.setState({ groupName: json.name, loading: false });
+      });
   }
   handleChange = (event) => {
     const enteredValueName = event.target.name;
@@ -104,7 +117,7 @@ class MailGroup extends Component {
     event.preventDefault();
     this.setState({ submitting: true });
     const emailData = new FormData();
-    emailData.append("groupId", this.props.location.state.groupId);
+    emailData.append("groupId", this.state.groupId);
     emailData.append("subject", this.state.subject);
     emailData.append("htmlContent", this.state.htmlContent);
     for (let file of this.state.attachments.values()) {
@@ -249,4 +262,4 @@ class MailGroup extends Component {
 MailGroup.propTypes = {
   classes: PropTypes.object.isRequired,
 };
-export default withStyles(styles)(MailGroup);
+export default withRouter(withStyles(styles)(MailGroup));

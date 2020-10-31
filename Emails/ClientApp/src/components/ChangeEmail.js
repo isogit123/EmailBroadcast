@@ -1,6 +1,12 @@
 import React, { Component } from "react";
 import { Button, TextField, FormControl } from "@material-ui/core";
-import { getCookie, testEmail, viewError, viewSuccess } from "./util";
+import {
+  getCookie,
+  testEmail,
+  viewError,
+  viewSuccess,
+  checkSession,
+} from "./util";
 //Design
 import Avatar from "@material-ui/core/Avatar";
 import CssBaseline from "@material-ui/core/CssBaseline";
@@ -43,6 +49,9 @@ export class ChangeEmail extends Component {
     emailValidationError: "",
     submitting: false,
   };
+  componentDidMount() {
+    checkSession();
+  }
   handleChange = (event) => {
     const enteredValueName = event.target.name;
     this.setState({ [enteredValueName]: event.target.value });
