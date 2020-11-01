@@ -184,7 +184,8 @@ namespace Emails.Migrations
                 {
                     b.HasOne("Emails.Models.SentEmails", "SentEmails")
                         .WithMany("SentEmailsFailures")
-                        .HasForeignKey("SentEmailsId");
+                        .HasForeignKey("SentEmailsId")
+                        .OnDelete(DeleteBehavior.Cascade);
                 });
 #pragma warning restore 612, 618
         }

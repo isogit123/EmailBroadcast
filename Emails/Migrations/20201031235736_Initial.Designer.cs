@@ -10,8 +10,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Emails.Migrations
 {
     [DbContext(typeof(Context))]
-    [Migration("20200926005239_EmailErrorsUpdateFix")]
-    partial class EmailErrorsUpdateFix
+    [Migration("20201031235736_Initial")]
+    partial class Initial
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
@@ -101,6 +101,9 @@ namespace Emails.Migrations
 
                     b.HasIndex("SentEmailsId");
 
+                    b.HasIndex("Recipient", "SentEmailsId")
+                        .IsUnique();
+
                     b.ToTable("SentEmailsFailures");
                 });
 
@@ -182,8 +185,9 @@ namespace Emails.Migrations
             modelBuilder.Entity("Emails.Models.SentEmailsFailures", b =>
                 {
                     b.HasOne("Emails.Models.SentEmails", "SentEmails")
-                        .WithMany()
-                        .HasForeignKey("SentEmailsId");
+                        .WithMany("SentEmailsFailures")
+                        .HasForeignKey("SentEmailsId")
+                        .OnDelete(DeleteBehavior.Cascade);
                 });
 #pragma warning restore 612, 618
         }

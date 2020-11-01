@@ -37,7 +37,9 @@ export class Layout extends Component {
           </Typography>
           <Typography variant="body2" color="textSecondary" align="center">
             {"Designed using "}
-            <Link href="https://material-ui.com/">Material UI</Link>{" "}
+            <a href="https://material-ui.com/" target="_blank">
+              Material UI
+            </a>{" "}
             {"templates"}
           </Typography>
           <Link

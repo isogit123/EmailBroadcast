@@ -16,7 +16,6 @@ namespace Emails.DB
         public DbSet<Tokens> Tokens { get; set; }
         public DbSet<SentEmails> SentEmails { get; set; }
         public DbSet<SentEmailsFailures> SentEmailsFailures { get; set; }
-        public DbSet<LogOutRequests> LogOutRequests { get; set; }
         public Context(DbContextOptions<Context> options):base(options)
         {
 
@@ -32,6 +31,10 @@ namespace Emails.DB
             modelBuilder.Entity<SentEmailsFailures>()
                 .HasIndex(x => new { x.Recipient, x.SentEmailsId })
                 .IsUnique();
+            modelBuilder.Entity<SentEmails>()
+                .HasMany(x => x.SentEmailsFailures)
+                .WithOne(x => x.SentEmails)
+                .OnDelete(DeleteBehavior.Cascade);
         }
     }
 }

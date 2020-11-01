@@ -131,7 +131,7 @@ class Signup extends Component {
         body: JSON.stringify({
           name: this.state.username,
           password: this.state.password,
-          email: this.state.email,
+          email: this.state.email == "" ? null : this.state.email,
         }),
         headers: {
           "Content-Type": "application/json",
@@ -139,12 +139,20 @@ class Signup extends Component {
         },
       })
         .then((response) => {
-          response.status == 200
-            ? viewSuccess(
-                "User added successfully",
-                "Confirmation email has been sent"
-              )
-            : viewError("Error adding user");
+          if (response.status == 200)
+            viewSuccess(
+              "User added successfully",
+              this.state.email == "" ? "" : "Confirmation email has been sent"
+            );
+          else {
+            viewError("Error adding user");
+            return response.text();
+          }
+          this.setState({ submitting: false });
+        })
+        .then((text) => {
+          if (typeof text != "undefined" && text.includes("duplicate key"))
+            viewError("Username exists");
           this.setState({ submitting: false });
         })
         .catch(() => {

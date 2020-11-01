@@ -90,7 +90,7 @@ class EmailsList extends Component {
           )}
           <Grid container>
             <Grid item xs={12}>
-              {!this.state.loading && (
+              {!this.state.loading && this.state.emails.length > 0 && (
                 <List className={classes.list} component={Card}>
                   {this.state.emails.map((item, index) => {
                     return (

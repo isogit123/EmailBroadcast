@@ -111,7 +111,7 @@ export class NavMenu extends Component {
                           className="text-dark"
                           to="/changeemail"
                         >
-                          Edit email
+                          Change email
                         </NavLink>
                       </NavItem>
                     </DropdownItem>

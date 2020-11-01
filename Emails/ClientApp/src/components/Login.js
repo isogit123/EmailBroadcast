@@ -5,7 +5,7 @@ import {
   FormControl,
   createMuiTheme,
 } from "@material-ui/core";
-import { getCookie, viewSuccess, viewError } from "./util";
+import { getCookie, viewSuccess, viewError, checkSession } from "./util";
 import { Link } from "react-router-dom";
 //Design
 import Avatar from "@material-ui/core/Avatar";
@@ -50,9 +50,15 @@ class Login extends Component {
     submitting: false,
   };
   static contextType = LoggedInUserName;
-  componentDidMount() {
+  async componentDidMount() {
     if (window.location.href.split("v=")[1] === "1")
       viewSuccess("Email verified successfully");
+
+    fetch("api/users/checksession").then((response) => {
+      if (response.status == 200) {
+        this.props.history.push("/");
+      }
+    });
   }
   handleChange = (event) => {
     const enteredValueName = event.target.name;
