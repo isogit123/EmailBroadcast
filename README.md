@@ -18,4 +18,4 @@ docker run -it -p 6000:6000 -e PORT=6000 email-broadcast
 ```
 Then go to http://localhost:6000
 
-There is a live demo of the website on http://email-obscura.herokuapp.com/
+There is a live demo of the website on https://email-obscura.herokuapp.com/
