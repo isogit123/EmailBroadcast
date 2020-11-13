@@ -1,7 +1,8 @@
 # EmailBroadcast
 Send a mail to a group with one click
 ## Building and Running
-You can build using Visual Studio or Docker.
+You can build using Visual Studio or Docker. <br />
+The website has been developed using ASP.NET Core and React. Entity Framework has been used to access a Postgres database.
 
 Before running, add the following in Emails/appsettings.json:
 - Your database connection string in *context* field in line 11.
