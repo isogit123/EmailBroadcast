@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using Google.Cloud.Firestore;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
@@ -7,14 +8,15 @@ using System.Threading.Tasks;
 
 namespace Emails.Models
 {
+    [FirestoreData]
     public class Groups
     {
-        public int Id { get; set; }
+        [FirestoreDocumentId]
+        public string Id { get; set; }
         [Required]
+        [FirestoreProperty]
         public string Name { get; set; }
-        public List<Emails> Emails { get; set; }
-        public int UsersId { get; set; }
-        [JsonIgnore]
-        public virtual Users Users { get; set; }
+        [FirestoreProperty]
+        public List<string> Emails { get; set; }
     }
 }

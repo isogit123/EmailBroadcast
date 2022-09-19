@@ -8,11 +8,11 @@ namespace Emails.Services
 {
     public interface IGroupService
     {
-        Task<List<Groups>> GetGroups(int userId);
-        Task<Groups> GetGroupById(int groupId);
-        Task AddGroup(Groups group, int userId);
-        Task EditGroup(Groups group);
-        Task DeleteGroup(int groupId);
-        Task<List<Models.Emails>> GetGroupEmails(int groupId);
+        Task<List<Groups>> GetGroups(string userId);
+        Task<Groups> GetGroupById(string groupId, string userId);
+        Task AddGroup(Groups group, string userId);
+        Task EditGroup(Groups group, string userId);
+        Task DeleteGroup(string groupId, string userId);
+        Task<List<string>> GetGroupEmails(string groupId, string userId);
     }
 }

@@ -10,6 +10,7 @@ using Emails.Filters;
 using Emails.Models;
 using Emails.Services;
 using Emails.ViewModels;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
@@ -19,7 +20,8 @@ namespace Emails.Controllers
 {
     [Route("api/[controller]/[action]")]
     [ApiController]
-    [ServiceFilter(typeof(AuthenticationFilter))]
+    [Authorize]
+    [ServiceFilter(typeof(CookieAuthorizationFilter))]
     public class GroupController : ControllerBase
     {
         IGroupService _groupService;
@@ -35,7 +37,8 @@ namespace Emails.Controllers
         {
             try
             {
-                var groups = await _groupService.GetGroups(HttpContext.Session.GetInt32("userId").Value);
+                string userId = HttpContext.User.Identity.Name;
+                var groups = await _groupService.GetGroups(userId);
                 return groups;
             }
             catch
@@ -48,7 +51,10 @@ namespace Emails.Controllers
         public async Task Add([FromBody] Groups group)
         {
             if (ModelState.IsValid)
-                await _groupService.AddGroup(group, HttpContext.Session.GetInt32("userId").Value);
+            {
+                string userId = HttpContext.User.Identity.Name;
+                await _groupService.AddGroup(group, userId);
+            }
         }
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -56,8 +62,8 @@ namespace Emails.Controllers
         {
             if (ModelState.IsValid)
             {
-                group.UsersId = HttpContext.Session.GetInt32("userId").Value;
-                await _groupService.EditGroup(group);
+                string userId = HttpContext.User.Identity.Name;
+                await _groupService.EditGroup(group, userId);
             }
         }
 
@@ -65,29 +71,36 @@ namespace Emails.Controllers
         [ValidateAntiForgeryToken]
         public async Task Delete([FromBody] GroupDeleteViewModel groupDeleteViewModel)
         {
-            await _groupService.DeleteGroup(groupDeleteViewModel.GroupId);
+            if (ModelState.IsValid)
+            {
+                string userId = HttpContext.User.Identity.Name;
+                await _groupService.DeleteGroup(groupDeleteViewModel.GroupId, userId);
+            }
         }
-        public async Task<Groups> GetById([FromQuery] int groupId)
+        public async Task<Groups> GetById([FromQuery] string groupId)
         {
-            return await _groupService.GetGroupById(groupId);
+            string userId = HttpContext.User.Identity.Name;
+            return await _groupService.GetGroupById(groupId, userId);
         }
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<string> SendMailToGroup([FromForm] EmailViewModel emailViewModel)
         {
-            string groupName = (await _groupService.GetGroupById(emailViewModel.GroupId)).Name;
+            string userId = HttpContext.User.Identity.Name;
+            string groupName = (await _groupService.GetGroupById(emailViewModel.GroupId, userId)).Name;
             var subject = emailViewModel.Subject ?? " ";
-            var emails = await _groupService.GetGroupEmails(emailViewModel.GroupId);
+            var emails = await _groupService.GetGroupEmails(emailViewModel.GroupId, userId);
             var htmlContent = emailViewModel.HtmlContent ?? " ";
-            var resp = await _mailWrapperService.SendMail(emails.Select(x => x.Email).ToArray(), $"{groupName} Group Broadcast", subject, htmlContent, emailViewModel.Attachments);
+            var resp = await _mailWrapperService.SendMail(emails.ToArray(), $"{groupName} Group Broadcast", subject, htmlContent, emailViewModel.Attachments);
             if (resp != "-1")
             {
                 await _sentEmailsService.AddEmails(new SentEmails
                 {
-                    Id = resp,
-                    GroupsId = emailViewModel.GroupId,
-                    Subject = subject
-                });
+                    IdFromMailService = resp,
+                    GroupId = emailViewModel.GroupId,
+                    Subject = subject,
+                    GroupName = groupName
+                }, userId);
                 return "acc";
             }
             return "-1";

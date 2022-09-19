@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Google.Cloud.Firestore;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -7,16 +8,20 @@ using System.Threading.Tasks;
 
 namespace Emails.Models
 {
+    [FirestoreData]
     public class SentEmails
     {
-        [Key]
-        public string Id { get; set; }
+        [FirestoreProperty]
+        public string IdFromMailService { get; set; }
+        [FirestoreProperty]
         public string Subject { get; set; }
+        [FirestoreProperty]
         public DateTime SendingDate { get; set; }
-        public int GroupsId { get; set; }
-        public virtual Groups Groups { get; set; }
-        public virtual List<SentEmailsFailures> SentEmailsFailures { get; set; }
-        [NotMapped]
-        public int SentEmailsFailuresCount { get; set; }
+        [FirestoreProperty]
+        public string GroupId { get; set; }
+        [FirestoreProperty]
+        public string GroupName { get; set; }
+        [FirestoreProperty]
+        public List<string> FailedToReachEmails { get; set; } = new List<string>();
     }
 }

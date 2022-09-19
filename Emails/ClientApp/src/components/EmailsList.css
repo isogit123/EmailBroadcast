@@ -1,0 +1,6 @@
+.infinite-scroll-component__outerdiv{
+    width: 100%;
+}
+.infinite-scroll-component {
+    overflow: hidden !important;
+}

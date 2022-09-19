@@ -1,6 +1,6 @@
-﻿using Emails.DB;
-using Emails.Models;
-using Microsoft.EntityFrameworkCore;
+﻿using Emails.Models;
+using Emails.ViewModels;
+using Google.Cloud.Firestore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,46 +10,59 @@ namespace Emails.Services
 {
     public class SentEmailsService : ISentEmailsService
     {
-        private Context _db;
+        private FirestoreDb _db;
 
-        public SentEmailsService(Context db)
+        public SentEmailsService(FirestoreDb db)
         {
             _db = db;
         }
-        public async Task AddEmails(SentEmails sentEmails)
+        public async Task AddEmails(SentEmails sentEmails, string userId)
         {
+            CollectionReference collectionReference = _db.Collection("users").Document(userId).Collection("sent_emails");
             sentEmails.SendingDate = DateTime.UtcNow;
-            await _db.SentEmails.AddAsync(sentEmails);
-            await _db.SaveChangesAsync();
+            await collectionReference.AddAsync(sentEmails);
         }
-        public async Task AddEmailFailure(SentEmailsFailures sentEmailsFailures)
+        public async Task AddEmailFailure(string userId, string emailId, string failedToReachEmail)
         {
-            await _db.SentEmailsFailures.AddAsync(sentEmailsFailures);
-            await _db.SaveChangesAsync();
+            Query query = _db.Collection("users").Document(userId).Collection("sent_emails")
+                .WhereEqualTo("IdFromMailService", emailId);
+            var snap = await query.GetSnapshotAsync();
+            var reference = snap.First().Reference;
+            await reference.UpdateAsync("FailedToReachEmails", FieldValue.ArrayUnion(failedToReachEmail));
         }
 
-        public async Task<SentEmails> GetEmailById(string emailId)
+        public async Task<SentEmails> GetEmailById(string emailId, string userId)
         {
-            SentEmails email = await _db.SentEmails.Where(e => e.Id == emailId).Include(e => e.Groups).FirstAsync();
-            email.SentEmailsFailures = await _db.SentEmailsFailures.Where(e => e.SentEmailsId == emailId).OrderBy(e => e.Recipient).ToListAsync();
+            Query query = _db.Collection("users").Document(userId).Collection("sent_emails")
+                .WhereEqualTo("IdFromMailService", emailId);
+            var snap = await query.GetSnapshotAsync();
+            SentEmails email = snap.First().ConvertTo<SentEmails>();
+            email.FailedToReachEmails.Sort();
             return email;
         }
 
-        public async Task<List<SentEmails>> GetEmails(int userId, string subjectSearch)
+        public async Task<ReturnSentEmailsViewModel> GetEmails(string userId, string subjectSearch, DateTime? sendingDateStart = null)
         {
-            IQueryable<SentEmails> exp = _db.SentEmails.Where(e => e.Groups.UsersId == userId).Select(e => new SentEmails
+            //TODO Implement subject search.
+            int quantity = 11;
+            Query query;
+            if (sendingDateStart.HasValue)
+                query = _db.Collection("users").Document(userId).Collection("sent_emails").OrderBy("SendingDate").StartAfter(sendingDateStart.Value.ToUniversalTime()).Limit(quantity);
+            else
+                query = _db.Collection("users").Document(userId).Collection("sent_emails").OrderBy("SendingDate").Limit(quantity);
+            var snap = await query.GetSnapshotAsync();
+            List<SentEmails> emails = new List<SentEmails>();
+            foreach (var doc in snap.Documents)
             {
-                Id = e.Id,
-                Subject = e.Subject,
-                Groups = e.Groups,
-                SendingDate = e.SendingDate,
-                SentEmailsFailuresCount = e.SentEmailsFailures.Count()
-            });
-            if (!string.IsNullOrEmpty(subjectSearch))
-            {
-                exp = exp.Where(e => e.Subject.Contains(subjectSearch));
+                SentEmails email = doc.ConvertTo<SentEmails>();
+                emails.Add(email);
             }
-            return await exp.OrderByDescending(e => e.SendingDate).ToListAsync();
+            ReturnSentEmailsViewModel returnSentEmailsViewModel = new ReturnSentEmailsViewModel
+            {
+                Emails = emails.Count < 10? emails : emails.GetRange(0, quantity - 1),
+                HasMore = emails.Count == 11
+            };
+            return returnSentEmailsViewModel;
         }
 
     }

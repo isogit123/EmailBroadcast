@@ -34,10 +34,10 @@ class MailsTable extends Component {
                             return (
                                 <tr key={index}>
                                     <td>
-                                        {item.email}
+                                        {item}
                                     </td>
                                     <td>
-                                        <IconButton onClick={async () => await this.props.removeEmail(item.email)}><Delete /></IconButton>
+                                        <IconButton onClick={async () => await this.props.removeEmail(item)}><Delete /></IconButton>
                                     </td>
                                 </tr>
                             )

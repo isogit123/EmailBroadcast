@@ -31,11 +31,8 @@ namespace Emails.Controllers
             object payload = Newtonsoft.Json.JsonConvert.DeserializeObject(jsonObj);
             string email = ((JObject)payload).Value<string>("email");
             string messageId = ((JObject)payload).Value<string>("message-id");
-            await _sentEmailsService.AddEmailFailure(new Models.SentEmailsFailures
-            {
-                Recipient = email,
-                SentEmailsId = messageId
-            });
+            string userId = HttpContext.User.Identity.Name;
+            await _sentEmailsService.AddEmailFailure(userId, messageId, email);
         }
     }
 }

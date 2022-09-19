@@ -4,15 +4,11 @@ FROM mcr.microsoft.com/dotnet/core/aspnet:3.1-buster-slim AS base
 WORKDIR /app
 EXPOSE 80
 EXPOSE 443
-RUN apt update
-#Install Java runtime to run Apache Ignite library.
-RUN mkdir -p /usr/share/man/man1
-RUN apt-get install -y default-jre
 
 FROM mcr.microsoft.com/dotnet/core/sdk:3.1-buster AS build
 WORKDIR /src
 RUN curl -sL https://deb.nodesource.com/setup_lts.x | bash -
-RUN apt-get install -y nodejs
+RUN apt-get install -y nodejs && apt clean
 COPY ["Emails/Emails.csproj", "Emails/"]
 RUN dotnet restore "Emails/Emails.csproj"
 COPY . .
@@ -25,4 +21,4 @@ RUN dotnet publish "Emails.csproj" -c Release -o /app/publish
 FROM base AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
-CMD dotnet Emails.dll --urls=http://*:$PORT
+ENTRYPOINT ["dotnet", "Emails.dll", "urls=http://0.0.0.0:$PORT"]

@@ -85,20 +85,16 @@ export class ChangeEmail extends Component {
       },
     })
       .then((response) => {
-        if (response.status == 200) response.text();
-        else {
-          viewError("Error changing email");
-          this.setState({ submitting: false });
-        }
+        return response.text();
       })
       .then((data) => {
-        if (data != "-1")
+        if (data == "")
           viewSuccess(
             "Email changed successfully",
             "Confirmation email has been sent"
           );
-        else {
-          viewError("Error changing email");
+        else if(!data.includes("Exception")) {
+          viewError(data);
         }
         this.setState({ submitting: false });
       });

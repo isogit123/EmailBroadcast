@@ -18,7 +18,7 @@ class EditGroup extends Component {
     loadingFailure: false,
   };
   componentDidMount() {
-    let id = parseInt(this.props.match.params.id);
+    let id = this.props.match.params.id;
     fetch("api/group/getbyid/?groupId=" + id)
       .then((response) => {
         if (response.status == 200) {

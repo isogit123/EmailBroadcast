@@ -8,11 +8,14 @@ using Microsoft.AspNetCore.Mvc;
 using Emails.Models;
 using Emails.Pages;
 using Emails.ViewModels;
-using Emails.Filters;
 using Microsoft.AspNetCore.Identity;
 using System.Security.Cryptography;
 using Microsoft.Extensions.Configuration;
-using Apache.Ignite.Core;
+using System.Security.Claims;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authorization;
+using Emails.Filters;
 
 namespace Emails.Controllers
 {
@@ -22,12 +25,10 @@ namespace Emails.Controllers
     {
         IUsersService _usersService;
         IMailWrapperService _mailWrapperService;
-        IIgnite _ignite;
-        public UsersController(IUsersService usersService, IMailWrapperService mailWrapperService, IIgnite ignite)
+        public UsersController(IUsersService usersService, IMailWrapperService mailWrapperService)
         {
             _usersService = usersService;
             _mailWrapperService = mailWrapperService;
-            _ignite = ignite;
         }
 
         [HttpPost]
@@ -36,7 +37,12 @@ namespace Emails.Controllers
         {
             if (ModelState.IsValid)
             {
-                await _usersService.AddUser(user);
+               var errors = await _usersService.AddUser(user);
+                if (errors.Count > 0)
+                {
+                    Response.StatusCode = 400;
+                    return string.Join(",", errors);
+                }
                 if (!string.IsNullOrEmpty(user.Email)) //Send confirmation email.
                     return await SendConfirmationEmail(user.Id, user.Email);
                 return "";
@@ -52,13 +58,46 @@ namespace Emails.Controllers
             {
                 try
                 {
-                    int userId = await _usersService.Login(loginViewModel.UserName, loginViewModel.Password);
-                    if (userId != -1)
+
+                    Users user = await _usersService.Login(loginViewModel.UserName, loginViewModel.Password);
+                    
+                    if (user != null)
                     {
-                        HttpContext.Session.SetInt32("userId", userId);
-                        //Ignite cache to implement sigout from all devices functionality
-                        var cache = _ignite.GetOrCreateCache<int, SessionStore>("sessionCache");
-                        cache.Query(new Apache.Ignite.Core.Cache.Query.SqlFieldsQuery($"insert into SessionStore (SessionId,UserId) values ('{HttpContext.Session.Id}', {userId})"));
+                        HttpContext.Response.Cookies.Append("CookieGUID", user.CookieGUID);
+                        var claims = new List<Claim>
+{
+    new Claim(ClaimTypes.Name, user.Id),
+};
+                        var claimsIdentity = new ClaimsIdentity(
+    claims, CookieAuthenticationDefaults.AuthenticationScheme);
+                        var authProperties = new AuthenticationProperties
+                        {
+                            AllowRefresh = true,
+                            // Refreshing the authentication session should be allowed.
+                            
+                            ExpiresUtc = DateTimeOffset.UtcNow.AddMinutes(10),
+                            // The time at which the authentication ticket expires. A 
+                            // value set here overrides the ExpireTimeSpan option of 
+                            // CookieAuthenticationOptions set with AddCookie.
+
+                            //IsPersistent = true,
+                            // Whether the authentication session is persisted across 
+                            // multiple requests. When used with cookies, controls
+                            // whether the cookie's lifetime is absolute (matching the
+                            // lifetime of the authentication ticket) or session-based.
+
+                            //IssuedUtc = <DateTimeOffset>,
+                            // The time at which the authentication ticket was issued.
+
+                            //RedirectUri = <string>
+                            // The full path or absolute URI to be used as an http 
+                            // redirect response value.
+                        };
+
+                        await HttpContext.SignInAsync(
+                            CookieAuthenticationDefaults.AuthenticationScheme,
+                            new ClaimsPrincipal(claimsIdentity),
+                            authProperties);
                         return 0;
                     }
                     return -1;
@@ -70,11 +109,11 @@ namespace Emails.Controllers
             }
             return -1;
         }
-        public void LogOut()
+        public async Task LogOut()
         {
-            var cache = _ignite.GetOrCreateCache<int, SessionStore>("sessionCache");
-            cache.Query(new Apache.Ignite.Core.Cache.Query.SqlFieldsQuery($"delete from SessionStore where SessionId='{HttpContext.Session.Id}'"));
-            HttpContext.Session.Clear();
+            await HttpContext.SignOutAsync(
+    CookieAuthenticationDefaults.AuthenticationScheme);
+            Response.Cookies.Delete("CookieGUID");
         }
 
         public async Task<string> GeneratePasswordToken([FromQuery] string userEmail)
@@ -94,7 +133,7 @@ namespace Emails.Controllers
                 return "-1"; //No user found.
         }
 
-        public async Task<int> ValidatePasswordToken([FromQuery] string token)
+        public async Task<string> ValidatePasswordToken([FromQuery] string token)
         {
             return await _usersService.ValidateToken(token);
         }
@@ -104,29 +143,34 @@ namespace Emails.Controllers
         {
             if (ModelState.IsValid)
             {
-                await _usersService.EditUserPassword(resetPasswordViewModel.Token, resetPasswordViewModel.NewPassword);
+                string userId = await _usersService.EditUserPassword(resetPasswordViewModel.Token, resetPasswordViewModel.NewPassword);
+                await _usersService.ChangeCookieGUID(userId);
+                await LogOut();
             }
         }
-        [ServiceFilter(typeof(AuthenticationFilter))]
+        [Authorize]
+        [ServiceFilter(typeof(CookieAuthorizationFilter))]
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<string> EditEmail([FromBody] EditEmailViewModel editEmailViewModel)
         {
             if (ModelState.IsValid)
             {
-                int? userId = HttpContext.Session.GetInt32("userId");
-                if (userId.HasValue)
+                string userId = HttpContext.User.Identity.Name;
+                var error = await _usersService.EditUserEmail(userId, editEmailViewModel.NewEmail);
+                if (!string.IsNullOrEmpty(error))
                 {
-                    await _usersService.EditUserEmail(userId.Value, editEmailViewModel.NewEmail);
-                    return await SendConfirmationEmail(userId.Value, editEmailViewModel.NewEmail);
+                    Response.StatusCode = 400;
+                    return error;
                 }
+                await SendConfirmationEmail(userId, editEmailViewModel.NewEmail);
             }
             return "";
         }
         public async Task<ActionResult> ConfirmEmail([FromQuery] string token)
         {
-            int userId = await _usersService.ValidateToken(token);
-            if (userId != -1)
+            string userId = await _usersService.ValidateToken(token);
+            if (userId != "")
             {
                 await _usersService.ConfirmUserEmail(userId);
                 return Redirect("/login/?v=1");
@@ -137,8 +181,8 @@ namespace Emails.Controllers
         {
             try
             {
-                int? userId = HttpContext.Session.GetInt32("userId");
-                string username = (await _usersService.GetUserById(userId.Value)).Name;
+                string userId = User.Identity.Name;
+                string username = (await _usersService.GetUserById(userId)).Name;
                 return username;
             }
             catch
@@ -146,21 +190,22 @@ namespace Emails.Controllers
                 return "";
             }
         }
-        [ServiceFilter(typeof(AuthenticationFilter))]
-        public void SignOutFromAllDevices()
+        [Authorize]
+        public async Task SignOutFromOtherDevices()
         {
-            var cache = _ignite.GetOrCreateCache<int, SessionStore>("sessionCache");
-            cache.Query(new Apache.Ignite.Core.Cache.Query.SqlFieldsQuery($"delete from SessionStore where UserId={HttpContext.Session.GetInt32("userId").Value} and SessionId<>'{HttpContext.Session.Id}'"));
-
+            string userId = HttpContext.User.Identity.Name;
+            string guid = await _usersService.ChangeCookieGUID(userId);
+            HttpContext.Response.Cookies.Append("CookieGUID", guid);
         }
-        [ServiceFilter(typeof(AuthenticationFilter))]
+        [Authorize]
+        [ServiceFilter(typeof(CookieAuthorizationFilter))]
         public void CheckSession()
         {
 
         }
 
         //Sends email confirmation
-        private async Task<string> SendConfirmationEmail(int userId, string email)
+        private async Task<string> SendConfirmationEmail(string userId, string email)
         {
             string emailConfirmationtoken = await _usersService.GenerateToken(userId);
             var subject = "Email Confirmation";
@@ -168,7 +213,7 @@ namespace Emails.Controllers
 <html><head></head><body>
 <h1>Please confirm your email</h1>
 <div>
-<a target='_blank' href='{ $"{HttpContext.Request.Scheme}://{HttpContext.Request.Host}/api/users/confirmemail/?token={emailConfirmationtoken}"}'>Confirm email</a>
+<a target='_blank' href='{$"{HttpContext.Request.Scheme}://{HttpContext.Request.Host}/api/users/confirmemail/?token={emailConfirmationtoken}"}'>Confirm email</a>
 </div>
 </body>
 </html>
@@ -176,7 +221,7 @@ namespace Emails.Controllers
             var response = await _mailWrapperService.SendMail(new string[] { email }, "Email Broadcast", subject, htmlContent, null);
             return response != "-1" ? "acc" : "-1";
         }
-        private async Task<string> SendResetPasswordEmail(int userId, string email)
+        private async Task<string> SendResetPasswordEmail(string userId, string email)
         {
             string resetPassworToken = await _usersService.GenerateToken(userId);
             var subject = "Reset Password";

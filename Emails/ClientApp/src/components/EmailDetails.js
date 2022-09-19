@@ -84,7 +84,7 @@ class EmailDetails extends Component {
                     <label>To</label>
                   </Grid>
                   <Grid item xs={10}>
-                    <p>{email.groups.name}</p>
+                    <p>{email.groupName}</p>
                   </Grid>
                   <Grid item xs={2}>
                     <label>Date</label>
@@ -92,15 +92,15 @@ class EmailDetails extends Component {
                   <Grid item xs={10}>
                     <p>{formatDate(email.sendingDate)}</p>
                   </Grid>
-                  {email.sentEmailsFailures.length > 0 && (
+                  {email.failedToReachEmails.length > 0 && (
                     <Grid item xs={12}>
                       <label>Failed to Reach</label>
                     </Grid>
                   )}
-                  {email.sentEmailsFailures.map((item, index) => {
+                  {email.failedToReachEmails.map((item, index) => {
                     return (
                       <Grid item xs={12}>
-                        <p>{item.recipient}</p>
+                        <p>{item}</p>
                       </Grid>
                     );
                   })}

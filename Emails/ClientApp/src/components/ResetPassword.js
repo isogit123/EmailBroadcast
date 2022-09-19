@@ -134,7 +134,7 @@ class ResetPassword extends Component {
         let data = await resp.text();
         if (data != "-1") {
           viewSuccess("Pasword reset successfully");
-          this.props.history.push("/");
+          this.props.history.push("/login");
         } else viewError("User not found");
       } else viewError("Error loging in");
       this.setState({ submitting: false });

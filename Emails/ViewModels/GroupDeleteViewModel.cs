@@ -7,6 +7,6 @@ namespace Emails.ViewModels
 {
     public class GroupDeleteViewModel
     {
-        public int GroupId { get; set; }
+        public string GroupId { get; set; }
     }
 }

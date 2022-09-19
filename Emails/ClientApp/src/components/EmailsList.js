@@ -20,6 +20,7 @@ import Container from "@material-ui/core/Container";
 import PropTypes from "prop-types";
 import {
   Fab,
+  LinearProgress,
   List,
   ListItem,
   ListItemIcon,
@@ -27,6 +28,8 @@ import {
   ListItemText,
 } from "@material-ui/core";
 import Card from "@material-ui/core/Card";
+import InfiniteScroll from "react-infinite-scroll-component";
+import "./EmailsList.css";
 
 const styles = (theme) => ({
   paper: {
@@ -55,15 +58,26 @@ class EmailsList extends Component {
   state = {
     emails: [],
     loading: true,
+    hasMore: false,
   };
 
   async getEmails() {
     checkSession();
-    const url = `api/sentemails/GetEmails/`;
+    let url = `api/sentemails/GetEmails/`;
+    if (this.state.emails.length > 0)
+      url +=
+        "?" +
+        new URLSearchParams({
+          sendingDateStart:
+            this.state.emails[this.state.emails.length - 1].sendingDate,
+        });
     const response = await fetch(url);
     if (response.status == 200) {
       const data = await response.json();
-      const newState = { emails: data };
+      const newState = this.state;
+      newState.emails = newState.emails.concat(data.emails);
+      newState.hasMore = data.hasMore;
+      console.log(newState);
       this.setState(newState);
     } else if (response.status != 401)
       viewError("Website not available", "Please try again later");
@@ -88,39 +102,51 @@ class EmailsList extends Component {
           {this.state.loading && (
             <CircularProgress style={{ marginTop: "2%" }} />
           )}
+
           <Grid container>
-            <Grid item xs={12}>
-              {!this.state.loading && this.state.emails.length > 0 && (
-                <List className={classes.list} component={Card}>
-                  {this.state.emails.map((item, index) => {
-                    return (
-                      <ListItem
-                        button
-                        component={Link}
-                        to={{
-                          pathname: "/EmailDetails/" + item.id,
-                        }}
-                      >
-                        <ListItemText
-                          primary={
-                            <div>
-                              <div>{item.groups.name}</div>
-                              <div>{item.subject}</div>
-                            </div>
-                          }
-                          secondary={formatDate(item.sendingDate)}
-                        />
-                        {item.sentEmailsFailuresCount > 0 && (
-                          <ListItemIcon className={classes.errorIcon}>
-                            <ErrorOutline color="error" />
-                          </ListItemIcon>
-                        )}
-                      </ListItem>
-                    );
-                  })}
-                </List>
-              )}
-            </Grid>
+            <InfiniteScroll
+              dataLength={this.state.emails.length}
+              next={this.getEmails.bind(this)}
+              hasMore={this.state.hasMore}
+              loader={
+                <div style={{ textAlign: "center" }}>
+                  <CircularProgress />
+                </div>
+              }
+            >
+              <Grid item xs={12}>
+                {!this.state.loading && this.state.emails.length > 0 && (
+                  <List className={classes.list} component={Card}>
+                    {this.state.emails.map((item, index) => {
+                      return (
+                        <ListItem
+                          button
+                          component={Link}
+                          to={{
+                            pathname: "/EmailDetails/" + item.idFromMailService,
+                          }}
+                        >
+                          <ListItemText
+                            primary={
+                              <div>
+                                <div>{item.groupName}</div>
+                                <div>{item.subject}</div>
+                              </div>
+                            }
+                            secondary={formatDate(item.sendingDate)}
+                          />
+                          {item.failedToReachEmails.length > 0 && (
+                            <ListItemIcon className={classes.errorIcon}>
+                              <ErrorOutline color="error" />
+                            </ListItemIcon>
+                          )}
+                        </ListItem>
+                      );
+                    })}
+                  </List>
+                )}
+              </Grid>
+            </InfiniteScroll>
           </Grid>
         </div>
       </Container>

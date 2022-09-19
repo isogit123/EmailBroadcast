@@ -151,8 +151,8 @@ class Signup extends Component {
           this.setState({ submitting: false });
         })
         .then((text) => {
-          if (typeof text != "undefined" && text.includes("duplicate key"))
-            viewError("Username exists");
+          if (typeof text != "undefined" && !text.includes("Exception"))
+            viewError(text);
           this.setState({ submitting: false });
         })
         .catch(() => {

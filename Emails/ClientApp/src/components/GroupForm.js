@@ -128,13 +128,14 @@ class GroupForm extends Component {
     const emails = [...this.state.emails];
     let isFound = false;
     emails.some((item) => {
-      if (item.email == this.state.email) {
+      let enteredEmail = this.state.email.toLowerCase()
+      if (item == enteredEmail) {
         isFound = true;
         return true;
       }
     });
     if (!isFound) {
-      emails.push({ email: this.state.email });
+      emails.push(this.state.email.toLowerCase());
       this.setState({
         emails: emails,
         emailErrorState: false,
@@ -153,7 +154,7 @@ class GroupForm extends Component {
     let answer = await removeConfirmation();
     if (answer.isConfirmed)
       this.setState({
-        emails: this.state.emails.filter((e) => e.email != email),
+        emails: this.state.emails.filter((e) => e != email),
       });
   }
   validateForm() {

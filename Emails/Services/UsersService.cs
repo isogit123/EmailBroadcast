@@ -1,8 +1,7 @@
-﻿using Emails.DB;
-using Emails.Models;
+﻿using Emails.Models;
+using Google.Cloud.Firestore;
 using Microsoft.AspNetCore.Cryptography.KeyDerivation;
 using Microsoft.AspNetCore.WebUtilities;
-using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -14,47 +13,130 @@ namespace Emails.Services
 {
     public class UsersService : IUsersService
     {
-        private Context _db;
+        private FirestoreDb _db;
 
-        public UsersService(Context db)
+        public UsersService(FirestoreDb db)
         {
             _db = db;
         }
 
-        public async Task<Users> GetUserById(int userId)
+        public async Task<Users> GetUserById(string userId)
         {
-            return await _db.Users.FindAsync(userId);
+            DocumentReference documentReference = _db.Collection("users").Document(userId);
+            var snapshot = await documentReference.GetSnapshotAsync();
+            if (snapshot.Exists)
+            {
+                Users user = snapshot.ConvertTo<Users>();
+                return user;
+            }
+            else
+                return null;
+        }       
+        public async Task<Users> GetUserByName(string userName)
+        {
+            Query query = _db.Collection("users").WhereEqualTo("Name", userName.ToLower());
+            var querySnapshot = await query.GetSnapshotAsync();
+            if (querySnapshot.Count > 0)
+            {
+                Users user = querySnapshot.First().ConvertTo<Users>();
+                return user;
+            }
+            else
+                return null;
         }
 
         public async Task<Users> GetUserByEmail(string email)
         {
-            return await _db.Users.Where(e => e.Email == email.ToLower()).FirstOrDefaultAsync();
+            Query query = _db.Collection("users").WhereEqualTo("Email", email.ToLower());
+            var snapshot = (await query.GetSnapshotAsync()).First();
+            if (snapshot.Exists)
+            {
+                Users user = snapshot.ConvertTo<Users>();
+                user.Id = snapshot.Id;
+                return user;
+            }
+            else
+                return null;
         }
-        public async Task AddUser(Users user)
+        private async Task<string> ValidateUserNameUnique(string name)
         {
-            user.Password = Hash(user.Password);
-            if (!string.IsNullOrEmpty(user.Email))
-                user.Email = user.Email.ToLower();
-            await _db.AddAsync(user);
-            await _db.SaveChangesAsync();
+            Query query = _db.Collection("users").WhereEqualTo("Name", name);
+            var isExist = (await query.GetSnapshotAsync()).Count > 0;
+            if (isExist)
+                return "User name already exists";
+            return "";
         }
-        public async Task EditUserPassword(string token, string newPassword)
+        private async Task<string> ValidateEmailUnique(string email)
         {
-            int userId = await ValidateToken(WebUtility.UrlDecode(token));
-            Users user = await _db.Users.FindAsync(userId);
-            user.Password = Hash(newPassword);
-            _db.Users.Update(user);
-            await _db.SaveChangesAsync();
+            if (!string.IsNullOrEmpty(email))
+            {
+                email = email.ToLower();
+                Query query = _db.Collection("users").WhereEqualTo("Email", email);
+                var emailExists = (await query.GetSnapshotAsync()).Count > 0;
+                if (emailExists)
+                    return "Email already exists";
+            }
+            return "";
         }
-        public async Task EditUserEmail(int userId, string newEmail)
+        public async Task<List<string>> ValidateUser(Users user)
         {
-            Users user = await _db.Users.FindAsync(userId);
-            user.Email = newEmail.ToLower();
-            user.IsEmailConfirmed = false;
-            _db.Users.Update(user);
-            await _db.SaveChangesAsync();
+            List<string> errors = new List<string>();
+            string userNameUniqueError = await ValidateUserNameUnique(user.Name);
+            string emailUniqueError = await ValidateEmailUnique(user.Email);
+            if (!string.IsNullOrEmpty(userNameUniqueError))
+                errors.Add(emailUniqueError);
+            if (!string.IsNullOrEmpty(emailUniqueError))
+                errors.Add(emailUniqueError);
+            return errors;
         }
-        public string Hash(string value, int? iterations = null)
+        public async Task<List<string>> AddUser(Users user)
+        {
+            var errors = await ValidateUser(user);
+            if (errors.Count == 0)
+            {
+                user.Name = user.Name.ToLower();
+                user.Password = Hash(user.Password);
+                user.CookieGUID = Guid.NewGuid().ToString();
+                var res = await _db.Collection("users").AddAsync(user);
+                user.Id = res.Id;
+            }
+            return errors;
+        }
+        public async Task<List<string>> UpdateUser(Users user)
+        {
+            var errors = await ValidateUser(user);
+            if (errors.Count == 0)
+            {
+                if (!string.IsNullOrEmpty(user.Email))
+                    user.Email = user.Email.ToLower();
+                await _db.Collection("users").Document(user.Id).SetAsync(user);
+            }
+            return errors;
+        }
+        public async Task<string> EditUserPassword(string token, string newPassword)
+        {
+            string userId = await ValidateToken(WebUtility.UrlDecode(token));
+            string pass = Hash(newPassword);
+            Dictionary<string, object> updates = new Dictionary<string, object>();
+            updates["Password"] = pass;
+            DocumentReference documentReference = _db.Collection("users").Document(userId);
+            await documentReference.UpdateAsync(updates);
+            return userId;
+        }
+        public async Task<string> EditUserEmail(string userId, string newEmail)
+        {
+            var error = await ValidateEmailUnique(newEmail);
+            if (string.IsNullOrEmpty(error))
+            {
+                Dictionary<string, object> updates = new Dictionary<string, object>();
+                updates["Email"] = newEmail;
+                updates["IsEmailConfirmed"] = false;
+                DocumentReference documentReference = _db.Collection("users").Document(userId);
+                await documentReference.UpdateAsync(updates);
+            }
+            return error;
+        }
+        private string Hash(string value, int? iterations = null)
         {
             byte[] salt = new byte[128 / 8];
             using (var rng = RandomNumberGenerator.Create())
@@ -70,7 +152,7 @@ namespace Emails.Services
                 numBytesRequested: 256 / 8));
             return hashed + "," + Convert.ToBase64String(salt);
         }
-        public string Hash(string value, string saltToUse, int? iterations = null)
+        private string Hash(string value, string saltToUse, int? iterations = null)
         {
             byte[] salt = Convert.FromBase64String(saltToUse);
             string hashed = Convert.ToBase64String(KeyDerivation.Pbkdf2(
@@ -82,20 +164,20 @@ namespace Emails.Services
             return hashed;
         }
 
-        public async Task<int> Login(string username, string password)
+        public async Task<Users> Login(string username, string password)
         {
-            Users user = await _db.Users.Where(e => e.Name == username).FirstOrDefaultAsync();
+            Users user = await GetUserByName(username);
             if (user != null)
             {
                 string[] splitPassword = user.Password.Split(",");
                 string hash = Hash(password, splitPassword[1]);
                 if (splitPassword[0] == hash)
-                    return user.Id;
+                    return user;
             }
-            return -1;
+            return null;
         }
 
-        public async Task<string> GenerateToken(int userId)
+        public async Task<string> GenerateToken(string userId)
         {
             string token = "";
             using (RandomNumberGenerator rng = RandomNumberGenerator.Create())
@@ -107,34 +189,46 @@ namespace Emails.Services
                 token = WebEncoders.Base64UrlEncode(bytes);
             }
             string tokenHash = Hash(token, 1);
-            await _db.Tokens.AddAsync(new Tokens
+            await _db.Collection("tokens").AddAsync(new Tokens
             {
                 UserId = userId,
-                GenerationDate = DateTime.Now,
+                GenerationDate = DateTime.UtcNow,
                 Token = tokenHash
             });
-            await _db.SaveChangesAsync();
             string salt = WebUtility.UrlEncode(tokenHash.Split(",")[1]);
             return token + $",{salt}";
         }
-        public async Task<int> ValidateToken(string token)
+        public async Task<string> ValidateToken(string token)
         {
             string[] tokenSplit = token.Split(",");
             string salt = tokenSplit[1];
             string tokenHash = Hash(tokenSplit[0], salt, 1);
-            DateTime maxTime = DateTime.Now.AddHours(1);
-            Tokens tokenFetched = await _db.Tokens.Where(e => e.Token == tokenHash + $",{salt}" && e.GenerationDate <= maxTime).FirstOrDefaultAsync();
+            DateTime maxTime = DateTime.UtcNow.AddHours(1);
+            Query query = _db.Collection("tokens").WhereEqualTo("Token", tokenHash + $",{salt}")
+                .WhereLessThanOrEqualTo("GenerationDate", maxTime);
+            var snapshots = await query.GetSnapshotAsync();
+            Tokens tokenFetched = snapshots.Documents.FirstOrDefault().ConvertTo<Tokens>();
             if (tokenFetched != null)
                 return tokenFetched.UserId;
             else
-                return -1;
+                return "";
         }
-        public async Task ConfirmUserEmail(int userId)
+        public async Task ConfirmUserEmail(string userId)
         {
-            Users user = await _db.Users.FindAsync(userId);
-            user.IsEmailConfirmed = true;
-            _db.Users.Update(user);
-            await _db.SaveChangesAsync();
+            Dictionary<string, object> updates = new Dictionary<string, object>();
+            updates["IsEmailConfirmed"] = true;
+            DocumentReference documentReference = _db.Collection("users").Document(userId);
+            await documentReference.UpdateAsync(updates);
         }
+        public async Task<string> ChangeCookieGUID(string userId)
+        {
+            DocumentReference documentReference = _db.Collection("users").Document(userId);
+            string guid = Guid.NewGuid().ToString();
+            Dictionary<string, object> updates = new Dictionary<string, object>();
+            updates["CookieGUID"] = guid;
+            await documentReference.UpdateAsync(updates);
+            return guid;
+        }
+
     }
 }

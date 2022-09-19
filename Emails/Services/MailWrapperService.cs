@@ -17,16 +17,18 @@ namespace Emails.Services
 {
     public class MailWrapperService : IMailWrapperService
     {
-        IConfiguration _configuration;
-        public MailWrapperService(IConfiguration configuration)
+        private readonly string senderEmail;
+        private readonly string emailApiKey;
+        public MailWrapperService()
         {
-            _configuration = configuration;
+            emailApiKey = Environment.GetEnvironmentVariable("EmailApiKey");
+            senderEmail = Environment.GetEnvironmentVariable("SenderEmail");
         }
         public async Task<string> SendMail(string[] to, string displayName, string subject, string body, List<IFormFile> attachments)
         {
-            Configuration.Default.AddApiKey("api-key", _configuration.GetValue<string>("EmailApiKey"));
+            Configuration.Default.AddApiKey("api-key", emailApiKey);
             var apiInstance = new SMTPApi();
-            SendSmtpEmailSender sender = new SendSmtpEmailSender(displayName, _configuration.GetValue<string>("SenderEmail"));
+            SendSmtpEmailSender sender = new SendSmtpEmailSender(displayName, senderEmail);
             List<SendSmtpEmailTo> too = new List<SendSmtpEmailTo>();
             foreach (var email in to)
                 too.Add(new SendSmtpEmailTo(email));

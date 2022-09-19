@@ -52,20 +52,14 @@ export async function removeConfirmation() {
 export function formatDate(date) {
   const dateObj = new Date(date);
   //Convert the date from UTC to local time zone.
-  dateObj.setMinutes(dateObj.getMinutes() - dateObj.getTimezoneOffset());
-  return `${dateObj.getFullYear()}-${("0" + dateObj.getMonth()).slice(-2)}-${(
-    "0" + dateObj.getDate()
-  ).slice(-2)} ${("0" + dateObj.getHours()).slice(-2)}:${(
-    "0" + dateObj.getMinutes()
-  ).slice(-2)}
-  `;
+  return dateObj.toLocaleString()
 }
 
 export function checkSession() {
   fetch("api/users/checksession").then((response) => {
     if (response.status == 401) {
       sessionStorage.setItem("requestedUrl", window.location.pathname);
-      document.getElementById("loginlink").click();
+      document.getElementById("logoutlink").click();
     }
   });
 }

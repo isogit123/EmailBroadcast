@@ -49,8 +49,8 @@ export class NavMenu extends Component {
     } else viewError("Error logging out");
   }
 
-  async signOutFromAllDevices() {
-    let resp = await fetch("api/users/SignOutFromAllDevices");
+  async signOutFromOtherDevices() {
+    let resp = await fetch("api/users/SignOutFromOtherDevices");
     if (resp.status == 200) {
       viewSuccess("Done");
     } else viewError("Error logging out");
@@ -129,6 +129,7 @@ export class NavMenu extends Component {
                     <DropdownItem>
                       <NavLink
                         tag={Link}
+                        id="logoutlink"
                         className="text-dark"
                         onClick={async () => await this.logOut()}
                       >
@@ -140,7 +141,7 @@ export class NavMenu extends Component {
                         <NavLink
                           className="text-dark"
                           onClick={async () =>
-                            await this.signOutFromAllDevices()
+                            await this.signOutFromOtherDevices()
                           }
                         >
                           Log out from other devices

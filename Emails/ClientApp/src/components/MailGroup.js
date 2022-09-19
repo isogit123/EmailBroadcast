@@ -168,10 +168,9 @@ class MailGroup extends Component {
             style={{ marginTop: "2%" }}
             hidden={!this.state.loading}
           />
-          <form
+          {!this.state.loading && <form
             className={classes.form}
             noValidate
-            hidden={this.state.loading}
             onSubmit={this.submitMail.bind(this)}
           >
             <TextField
@@ -190,7 +189,6 @@ class MailGroup extends Component {
               rows={10}
               variant="outlined"
               onChange={this.handleChange}
-              variant="outlined"
               margin="normal"
               fullWidth
             ></TextField>
@@ -253,7 +251,7 @@ class MailGroup extends Component {
             >
               Send
             </SubmitButton>
-          </form>
+          </form>}
         </div>
       </Container>
     );

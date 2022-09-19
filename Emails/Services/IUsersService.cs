@@ -8,14 +8,18 @@ namespace Emails.Services
 {
     public interface IUsersService
     {
-        Task<Users> GetUserById(int userId);
-        Task AddUser(Users user);
-        Task EditUserPassword(string token, string newPassword);
-        Task EditUserEmail(int userId, string newEmail);
-        Task<int> Login(string username, string password);
-        Task<string> GenerateToken(int userId);
+        Task<Users> GetUserById(string userId);
+        Task<List<string>> AddUser(Users user);
+        Task<List<string>> UpdateUser(Users user);
+        Task<string> EditUserPassword(string token, string newPassword);
+        Task<string> EditUserEmail(string userId, string newEmail);
+        Task<Users> Login(string username, string password);
+        Task<string> GenerateToken(string userId);
         Task<Users> GetUserByEmail(string email);
-        Task<int> ValidateToken(string token);
-        Task ConfirmUserEmail(int userId);
+        Task<string> ValidateToken(string token);
+        Task ConfirmUserEmail(string userId);
+        Task<List<string>> ValidateUser(Users user);
+        Task<string> ChangeCookieGUID(string userId);
+        Task<Users> GetUserByName(string userName);
     }
 }

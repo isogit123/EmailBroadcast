@@ -8,7 +8,7 @@ namespace Emails.ViewModels
 {
     public class EmailViewModel
     {
-        public int GroupId { get; set; }
+        public string GroupId { get; set; }
         public string Subject { get; set; }
         public string HtmlContent { get; set; }
         public List<IFormFile> Attachments{ get; set; }
