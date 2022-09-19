@@ -2,8 +2,6 @@
 
 FROM mcr.microsoft.com/dotnet/core/aspnet:3.1-buster-slim AS base
 WORKDIR /app
-EXPOSE 80
-EXPOSE 443
 
 FROM mcr.microsoft.com/dotnet/core/sdk:3.1-buster AS build
 WORKDIR /src
@@ -21,4 +19,7 @@ RUN dotnet publish "Emails.csproj" -c Release -o /app/publish
 FROM base AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
+RUN apt update && apt upgrade -y && apt clean
+RUN useradd runner
+USER runner
 ENTRYPOINT dotnet Emails.dll --urls=http://0.0.0.0:$PORT
