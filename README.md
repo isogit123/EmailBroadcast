@@ -2,12 +2,12 @@
 Send a mail to a group with one click
 ## Building and Running
 You can build using Visual Studio or Docker. <br />
-The website has been developed using ASP.NET Core and React. Entity Framework has been used to access a Postgres database.
+The website has been developed using ASP.NET Core and React. Firestore database has been used.
 
-Before running, add the following in Emails/appsettings.json:
-- Your database connection string in *context* field in line 11.
-- Your email service api key in *EmailApiKey* field in line 13.
-- Sender email in *SenderEmail* field in line 14.
+Before running, set the following in environment variables:
+- GOOGLE_APPLICATION_CREDENTIALS = Path to your Firebase Admin SDK key.
+- SenderEmail = Your sender email.
+- EmailApiKey = Send In Blue API key.
 
 To build using docker
 ```
@@ -18,5 +18,3 @@ After that run by
 docker run -it -p 6000:6000 -e PORT=6000 email-broadcast
 ```
 Then go to http://localhost:6000
-
-There is a live demo of the website on https://email-obscura.herokuapp.com/
