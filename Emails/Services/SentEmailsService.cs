@@ -47,9 +47,9 @@ namespace Emails.Services
             int quantity = 11;
             Query query;
             if (sendingDateStart.HasValue)
-                query = _db.Collection("users").Document(userId).Collection("sent_emails").OrderBy("SendingDate").StartAfter(sendingDateStart.Value.ToUniversalTime()).Limit(quantity);
+                query = _db.Collection("users").Document(userId).Collection("sent_emails").OrderByDescending("SendingDate").StartAfter(sendingDateStart.Value.ToUniversalTime()).Limit(quantity);
             else
-                query = _db.Collection("users").Document(userId).Collection("sent_emails").OrderBy("SendingDate").Limit(quantity);
+                query = _db.Collection("users").Document(userId).Collection("sent_emails").OrderByDescending("SendingDate").Limit(quantity);
             var snap = await query.GetSnapshotAsync();
             List<SentEmails> emails = new List<SentEmails>();
             foreach (var doc in snap.Documents)
