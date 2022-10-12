@@ -144,7 +144,7 @@ class MailGroup extends Component {
           typeof data != "undefined" &&
           data.toLowerCase().startsWith("acc")
         ) {
-          viewSuccess("Email sent successfully");
+          viewSuccess("Sending email");
           this.props.history.push("/");
         } else {
           viewError("Error sending email");

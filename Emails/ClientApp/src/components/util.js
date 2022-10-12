@@ -29,10 +29,16 @@ export function viewSuccess(title, msg) {
     icon: "success",
     title: title,
     text: msg,
+    toast: true,
+    position: 'top-end',
+    timer: 2000,
+    timerProgressBar: true,
+    showConfirmButton: false
   });
 }
 export function testEmail(mail) {
-  const emailRegex = /^(([^<>()\[\]\.,;:\s@\"]+(\.[^<>()\[\]\.,;:\s@\"]+)*)|(\".+\"))@(([^<>()[\]\.,;:\s@\"]+\.)+[^<>()[\]\.,;:\s@\"]{2,})$/i;
+  const emailRegex =
+    /^(([^<>()\[\]\.,;:\s@\"]+(\.[^<>()\[\]\.,;:\s@\"]+)*)|(\".+\"))@(([^<>()[\]\.,;:\s@\"]+\.)+[^<>()[\]\.,;:\s@\"]{2,})$/i;
   if (!emailRegex.test(mail)) {
     return false;
   }
@@ -52,7 +58,7 @@ export async function removeConfirmation() {
 export function formatDate(date) {
   const dateObj = new Date(date);
   //Convert the date from UTC to local time zone.
-  return dateObj.toLocaleString()
+  return dateObj.toLocaleString();
 }
 
 export function checkSession() {

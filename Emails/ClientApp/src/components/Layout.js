@@ -6,6 +6,8 @@ import Box from "@material-ui/core/Box";
 import { Link } from "react-router-dom";
 import LoggedInUserName from "./Context";
 import { viewError } from "./util";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { brands } from "@fortawesome/fontawesome-svg-core/import.macro";
 
 const styles = {};
 
@@ -32,6 +34,16 @@ export class Layout extends Component {
           <Container>{this.props.children}</Container>
         </LoggedInUserName.Provider>
         <Box mt={5}>
+          <Typography variant="body2" color="textSecondary" align="center">
+            {
+              <a
+                href="https://github.com/isogit123/EmailBroadcast"
+                target="_blank"
+              >
+                <FontAwesomeIcon icon={brands("github")} size="2x" />
+              </a>
+            }
+          </Typography>
           <Typography variant="body2" color="textSecondary" align="center">
             {"Licensed under MIT License"}
           </Typography>
