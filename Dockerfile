@@ -6,7 +6,7 @@ RUN apt update && apt upgrade -y && apt clean
 
 FROM mcr.microsoft.com/dotnet/core/sdk:3.1-buster AS build
 WORKDIR /src
-RUN curl -sL https://deb.nodesource.com/setup_lts.x | bash -
+RUN curl -sL https://deb.nodesource.com/setup_16.x | bash -
 RUN apt update && apt-get install -y nodejs && apt clean
 COPY ["Emails/Emails.csproj", "Emails/"]
 RUN dotnet restore "Emails/Emails.csproj"
