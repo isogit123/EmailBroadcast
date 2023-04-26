@@ -8,7 +8,7 @@ on:
 
 jobs:
 
-  build:
+  build-and-push:
 
     runs-on: ubuntu-latest
 
@@ -17,7 +17,7 @@ jobs:
     - name: Build the Docker image
       run: docker build . --file Dockerfile --tag ${{ vars.REPO }}:${GITHUB_SHA}
     - name: Tag the image as latest
-      run: docker tag ${{ vars.REPO }}:${GITHUB_SHA} latest
+      run: docker tag ${{ vars.REPO }}:${GITHUB_SHA} ${{ vars.REPO }}:latest
     - name: Login to Docker Hub
       run: echo ${{ secrets.DOCKERHUB_TOKEN }} | docker login --username ${{ vars.DOCKERHUB_USERNAME }} --password-stdin
     - name: Push the image with the Github commit SHA
