@@ -1,0 +1,26 @@
+name: Docker Image CI
+
+on:
+  push:
+    branches: [ "firestore_db" ]
+  pull_request:
+    branches: [ "firestore_db" ]
+
+jobs:
+
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+    - name: Build the Docker image
+      run: docker build . --file Dockerfile --tag ${REPO}:${GITHUB_SHA}
+    - name: Tag the image as latest
+      run: docker tag ${REPO}:${GITHUB_SHA} latest
+    - name: Login to Docker Hub
+      run: echo ${DOCKERHUB_TOKEN} | docker login --username ${DOCKERHUB_USERNAME} --password-stdin
+    - name: Push the image with the Github commit SHA
+      run: docker push ${REPO}:${GITHUB_SHA}
+    - name: Push the image with the latest tag
+      run: docker push ${REPO}:latest
